@@ -1,0 +1,34 @@
+{
+  "name": "skillenv",
+  "version": "0.1.0",
+  "description": "Local-first preflight checks for agent skill runtime requirements.",
+  "type": "module",
+  "bin": {
+    "skillenv": "./bin/skillenv.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check src/index.js && node --check bin/skillenv.js",
+    "smoke": "node bin/skillenv.js test/fixtures/ready/SKILL.md",
+    "validate": "bash scripts/validate.sh"
+  },
+  "keywords": [
+    "agents",
+    "skills",
+    "preflight",
+    "environment",
+    "cli"
+  ],
+  "author": "Roger Chappel",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin",
+    "src",
+    "docs",
+    "SKILL.md",
+    "README.md"
+  ]
+}

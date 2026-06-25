@@ -6,11 +6,11 @@ Initial public build of `skillenv`, including a CLI, parser, fixtures, tests, sm
 
 ## Verification
 
-- `npm test`
-- `npm run check`
-- `npm run smoke`
-- `npm run validate`
+- `npm test` passed.
+- `npm run check` passed.
+- `npm run smoke` passed.
+- `npm run validate` passed.
 
 ## Classification
 
-Ship if verification passes and the release candidate PR confirms useful findings across the fixtures.
+Ship. The first release candidate catches missing environment variables, unsafe live-action wording, and missing skill declarations while keeping all checks local-first.

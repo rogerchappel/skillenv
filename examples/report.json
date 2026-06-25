@@ -1,0 +1,28 @@
+{
+  "reports": [
+    {
+      "filePath": "SKILL.md",
+      "status": "pass",
+      "requirements": {
+        "requiredTools": [
+          "node",
+          "npm"
+        ],
+        "optionalTools": [
+          "gh"
+        ],
+        "envVars": [],
+        "inputs": [
+          "One or more local `SKILL.md` paths."
+        ],
+        "approvals": [
+          "Ask for explicit approval before running commands that mutate a repository or external account."
+        ],
+        "sideEffects": [
+          "Read local Markdown files only."
+        ]
+      },
+      "findings": []
+    }
+  ]
+}

@@ -9,7 +9,7 @@
   "scripts": {
     "test": "node --test",
     "check": "node --check src/index.js && node --check bin/skillenv.js",
-    "smoke": "node bin/skillenv.js test/fixtures/ready/SKILL.md",
+    "smoke": "EXAMPLE_TOKEN=1 node bin/skillenv.js test/fixtures/ready/SKILL.md",
     "validate": "bash scripts/validate.sh"
   },
   "keywords": [

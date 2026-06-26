@@ -10,6 +10,13 @@ npm run smoke
 node bin/skillenv.js --json test/fixtures/ready/SKILL.md
 ```
 
+Install the CLI from npm after release:
+
+```sh
+npm install -g skillenv
+skillenv --json path/to/SKILL.md
+```
+
 ## CLI
 
 ```sh
@@ -37,3 +44,12 @@ skillenv [--json] [--strict] <SKILL.md...>
 - Section extraction is intentionally conservative and Markdown-only.
 - The CLI detects common live-action verbs but cannot prove a skill is safe.
 - Required tool names should be written as list items, preferably with backticks.
+
+## Verify
+
+```sh
+npm test
+npm run check
+npm run smoke
+npm pack --dry-run
+```

@@ -42,6 +42,8 @@ skillenv [--json] [--strict] <SKILL.md...>
 ## Limitations
 
 - Section extraction is intentionally conservative and Markdown-only.
+- Supported list markers are `-`, `*`, `+`, and ordered markers such as `1.` or `1)`.
+- Repeated supported sections are combined in document order, with duplicate declarations kept once.
 - The CLI detects common live-action verbs but cannot prove a skill is safe.
 - Required tool names should be written as list items, preferably with backticks.
 

@@ -86,7 +86,7 @@ export function parseSections(markdown) {
     const heading = line.match(/^#{1,3}\s+(.+?)\s*$/);
     if (heading) {
       current = normalizeHeading(heading[1]);
-      sections[current] = [];
+      sections[current] ||= [];
       continue;
     }
     sections[current].push(line);
@@ -108,9 +108,9 @@ export function extractRequirements(sections) {
     requiredTools: unique(extractListItems(read('requiredTools')).map(cleanCommand).filter(Boolean)),
     optionalTools: unique(extractListItems(read('optionalTools')).map(cleanCommand).filter(Boolean)),
     envVars: unique(extractEnvVars(read('environment'))),
-    inputs: extractListItems(read('inputs')),
-    approvals: extractListItems(read('approvals')),
-    sideEffects: extractListItems(read('sideEffects'))
+    inputs: unique(extractListItems(read('inputs'))),
+    approvals: unique(extractListItems(read('approvals'))),
+    sideEffects: unique(extractListItems(read('sideEffects')))
   };
 }
 
@@ -135,7 +135,7 @@ function normalizeHeading(value) {
 function extractListItems(text) {
   return text
     .split(/\r?\n/)
-    .map((line) => line.match(/^\s*[-*]\s+(.*)$/)?.[1]?.trim())
+    .map((line) => line.match(/^\s*(?:[-*+]|\d+[.)])\s+(.*)$/)?.[1]?.trim())
     .filter(Boolean);
 }
 

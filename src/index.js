@@ -54,7 +54,8 @@ export function auditSkill(markdown, options = {}) {
     });
   }
 
-  const unsafeLiveAction = LIVE_ACTION_PATTERN.test(markdown) && !APPROVAL_PATTERN.test(sections.approvals || '');
+  const approvalText = requirements.approvals.join('\n');
+  const unsafeLiveAction = LIVE_ACTION_PATTERN.test(markdown) && !APPROVAL_PATTERN.test(approvalText);
   if (unsafeLiveAction) {
     findings.push({
       level: 'error',
@@ -142,6 +143,7 @@ function extractListItems(text) {
 function extractEnvVars(text) {
   const names = new Set();
   for (const item of extractListItems(text)) {
+    if (!/\brequired\b/i.test(item)) continue;
     const match = item.match(/`?([A-Z][A-Z0-9_]{2,})`?/);
     if (match) names.add(match[1]);
   }

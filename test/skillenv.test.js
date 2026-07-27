@@ -38,6 +38,76 @@ test('flags live action wording without approval boundaries', () => {
   assert.ok(report.findings.some((finding) => finding.code === 'unsafe-live-action'));
 });
 
+test('honors every approval section alias when checking live actions', () => {
+  for (const heading of ['Approval Requirements', 'Approvals', 'External Actions']) {
+    const report = auditSkill(`# Alias
+
+This skill can publish a report.
+
+## Required Tools
+
+- \`node\`
+
+## ${heading}
+
+- Keep publishing in dry-run mode unless the user approves.
+`, {
+      env: {},
+      pathEnv: process.env.PATH
+    });
+
+    assert.equal(
+      report.findings.some((finding) => finding.code === 'unsafe-live-action'),
+      false,
+      `${heading} should supply the approval boundary`
+    );
+  }
+});
+
+test('requires only environment variables explicitly marked as required', () => {
+  const report = auditSkill(`# Environment declarations
+
+## Required Tools
+
+- \`node\`
+
+## Environment Variables
+
+- \`REQUIRED_TOKEN\` is required.
+- \`OPTIONAL_TOKEN\` is optional.
+- For example, another skill may use \`EXAMPLE_TOKEN\`.
+
+## Approval Requirements
+
+- Keep writes in dry-run mode.
+`, {
+    env: {},
+    pathEnv: process.env.PATH
+  });
+
+  assert.deepEqual(report.requirements.envVars, ['REQUIRED_TOKEN']);
+  assert.deepEqual(
+    report.findings.filter((finding) => finding.code === 'missing-env').map((finding) => finding.message),
+    ["Required environment variable 'REQUIRED_TOKEN' is not set."]
+  );
+});
+
+test('audits the repository skill without optional example environment failures', () => {
+  const markdown = readFileSync(new URL('../SKILL.md', import.meta.url), 'utf8');
+  const report = auditSkill(markdown, {
+    env: {},
+    pathEnv: process.env.PATH
+  });
+
+  assert.deepEqual(report.requirements.envVars, []);
+  assert.equal(
+    report.findings.some(
+      (finding) => finding.code === 'missing-env' || finding.code === 'unsafe-live-action'
+    ),
+    false
+  );
+});
+
 test('accumulates repeated section aliases and extracts supported list markers', () => {
   const report = auditSkill(fixture('list-syntax'), {
     env: { PRIMARY_TOKEN: 'present', SECONDARY_TOKEN: 'present' },

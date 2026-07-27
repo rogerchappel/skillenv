@@ -30,8 +30,8 @@ skillenv [--json] [--strict] <SKILL.md...>
 ## What It Checks
 
 - Required tools declared under `Required tools`, `Tools`, or `Dependencies`.
-- Environment variables declared under `Environment variables`, `Env vars`, or `Configuration`.
-- Approval and dry-run language for live external actions.
+- Environment variables explicitly marked `required` under `Environment variables`, `Env vars`, or `Configuration`.
+- Approval and dry-run language under `Approval requirements`, `Approvals`, or `External actions`.
 - Missing required tool declarations.
 - Missing approval declarations.
 
@@ -46,6 +46,7 @@ skillenv [--json] [--strict] <SKILL.md...>
 - Repeated supported sections are combined in document order, with duplicate declarations kept once.
 - The CLI detects common live-action verbs but cannot prove a skill is safe.
 - Required tool names should be written as list items, preferably with backticks.
+- Required environment variables should be list items containing the variable name and the word `required`; optional variables and examples are ignored.
 
 ## Verify
 

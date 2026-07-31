@@ -13,10 +13,18 @@ Options:
 }
 
 const args = process.argv.slice(2);
+const knownOptions = new Set(['--json', '--strict', '--help', '-h']);
+const unknownOption = args.find((arg) => arg.startsWith('-') && !knownOptions.has(arg));
+
+if (unknownOption) {
+  console.error(`Error: unknown option ${unknownOption}\n\n${usage()}`);
+  process.exit(2);
+}
+
 const json = args.includes('--json');
 const strict = args.includes('--strict');
 const help = args.includes('--help') || args.includes('-h');
-const paths = args.filter((arg) => !arg.startsWith('--'));
+const paths = args.filter((arg) => !knownOptions.has(arg));
 
 if (help) {
   console.log(usage());
@@ -28,11 +36,19 @@ if (paths.length === 0) {
   process.exit(2);
 }
 
-const reports = paths.map((inputPath) => {
-  const filePath = resolve(inputPath);
-  const body = readFileSync(filePath, 'utf8');
-  return auditSkill(body, { filePath, env: process.env });
-});
+let reports;
+let failedInput;
+try {
+  reports = paths.map((inputPath) => {
+    failedInput = inputPath;
+    const filePath = resolve(inputPath);
+    const body = readFileSync(filePath, 'utf8');
+    return auditSkill(body, { filePath, env: process.env });
+  });
+} catch (error) {
+  console.error(`Error: cannot read input ${failedInput}: ${error.message}`);
+  process.exit(2);
+}
 
 if (json) {
   console.log(JSON.stringify({ reports }, null, 2));

@@ -27,6 +27,12 @@ skillenv [--json] [--strict] <SKILL.md...>
 - `--strict` exits non-zero on warnings as well as errors.
 - Without flags, reports are text-first and suitable for pull request comments.
 
+`--help` (or `-h`) prints usage and exits 0. Invoking the CLI without an input,
+passing an unknown option, or naming an unreadable input prints a concise error
+and exits 2. Completed audits exit 1 when a report fails, or when `--strict`
+promotes a warning to failure; otherwise they exit 0. Diagnostics are written to
+standard error, while reports and help are written to standard output.
+
 ## What It Checks
 
 - Required tools declared under `Required tools`, `Tools`, or `Dependencies`.

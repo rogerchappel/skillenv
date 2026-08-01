@@ -38,6 +38,7 @@ standard error, while reports and help are written to standard output.
 - Required tools declared under `Required tools`, `Tools`, or `Dependencies`.
 - Environment variables explicitly marked `required` under `Environment variables`, `Env vars`, or `Configuration`.
 - Approval and dry-run language under `Approval requirements`, `Approvals`, or `External actions`.
+- Explicit prohibitions and read-only boundaries under `Side-effect boundaries`, `Side effects`, or `Side effects and safety`.
 - Missing required tool declarations.
 - Missing approval declarations.
 
@@ -51,6 +52,8 @@ standard error, while reports and help are written to standard output.
 - Supported list markers are `-`, `*`, `+`, and ordered markers such as `1.` or `1)`.
 - Repeated supported sections are combined in document order, with duplicate declarations kept once.
 - The CLI detects common live-action verbs but cannot prove a skill is safe.
+- Live-action wording fails unless a supported approval, dry-run, prohibition, or read-only boundary is declared. A side-effect declaration that authorizes or describes performing the action is not itself a safety boundary.
+- A prohibition in a side-effect section prevents the live-action error, but a skill without an approval section still receives the separate `no-approvals` warning.
 - Required tool names should be written as list items, preferably with backticks.
 - Required environment variables should be list items containing the variable name and the word `required`; optional variables and examples are ignored.
 

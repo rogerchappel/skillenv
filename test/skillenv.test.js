@@ -64,6 +64,56 @@ This skill can publish a report.
   }
 });
 
+test('honors explicit prohibitions under every side-effect section alias', () => {
+  for (const heading of ['Side-Effect Boundaries', 'Side Effects', 'Side Effects and Safety']) {
+    const report = auditSkill(`# Prohibited action
+
+## Required Tools
+
+- \`node\`
+
+## ${heading}
+
+- Never publish or write to external systems.
+`, {
+      env: {},
+      pathEnv: process.env.PATH
+    });
+
+    assert.equal(report.status, 'warn', `${heading} should retain the missing-approval warning`);
+    assert.equal(
+      report.findings.some((finding) => finding.code === 'unsafe-live-action'),
+      false,
+      `${heading} should supply the prohibition boundary`
+    );
+    assert.ok(report.findings.some((finding) => finding.code === 'no-approvals'));
+  }
+});
+
+test('flags actionable wording under every side-effect section alias without a boundary', () => {
+  for (const heading of ['Side-Effect Boundaries', 'Side Effects', 'Side Effects and Safety']) {
+    const report = auditSkill(`# Actionable side effect
+
+## Required Tools
+
+- \`node\`
+
+## ${heading}
+
+- Publish the generated report to the external service.
+`, {
+      env: {},
+      pathEnv: process.env.PATH
+    });
+
+    assert.equal(report.status, 'fail');
+    assert.ok(
+      report.findings.some((finding) => finding.code === 'unsafe-live-action'),
+      `${heading} should not treat actionable wording as a boundary`
+    );
+  }
+});
+
 test('requires only environment variables explicitly marked as required', () => {
   const report = auditSkill(`# Environment declarations
 

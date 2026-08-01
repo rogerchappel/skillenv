@@ -12,6 +12,7 @@ const SECTION_ALIASES = {
 
 const LIVE_ACTION_PATTERN = /\b(push|publish|deploy|delete|merge|send|charge|transfer|write to|post to|create ticket|update crm)\b/i;
 const APPROVAL_PATTERN = /\b(approval|approve|explicit consent|dry-run|dry run|confirm before|read-only by default)\b/i;
+const PROHIBITION_PATTERN = /\b(never|must not|do not|don't|cannot|can't|prohibit(?:ed|s)?|read-only|read only|no writes?|without writing)\b/i;
 
 export function auditSkill(markdown, options = {}) {
   const sections = parseSections(markdown);
@@ -54,8 +55,9 @@ export function auditSkill(markdown, options = {}) {
     });
   }
 
-  const approvalText = requirements.approvals.join('\n');
-  const unsafeLiveAction = LIVE_ACTION_PATTERN.test(markdown) && !APPROVAL_PATTERN.test(approvalText);
+  const boundaryText = [...requirements.approvals, ...requirements.sideEffects].join('\n');
+  const hasDeclaredBoundary = APPROVAL_PATTERN.test(boundaryText) || PROHIBITION_PATTERN.test(boundaryText);
+  const unsafeLiveAction = LIVE_ACTION_PATTERN.test(markdown) && !hasDeclaredBoundary;
   if (unsafeLiveAction) {
     findings.push({
       level: 'error',

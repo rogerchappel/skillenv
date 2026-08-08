@@ -49,6 +49,7 @@ standard error, while reports and help are written to standard output.
 ## Limitations
 
 - Section extraction is intentionally conservative and Markdown-only.
+- ATX headings inside valid backtick or tilde fenced code blocks are treated as example content, not section declarations. Fenced examples are excluded from requirement and live-action checks.
 - Supported list markers are `-`, `*`, `+`, and ordered markers such as `1.` or `1)`.
 - Repeated supported sections are combined in document order, with duplicate declarations kept once.
 - The CLI detects common live-action verbs but cannot prove a skill is safe.

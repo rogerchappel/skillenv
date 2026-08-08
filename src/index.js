@@ -57,7 +57,7 @@ export function auditSkill(markdown, options = {}) {
 
   const boundaryText = [...requirements.approvals, ...requirements.sideEffects].join('\n');
   const hasDeclaredBoundary = APPROVAL_PATTERN.test(boundaryText) || PROHIBITION_PATTERN.test(boundaryText);
-  const unsafeLiveAction = LIVE_ACTION_PATTERN.test(markdown) && !hasDeclaredBoundary;
+  const unsafeLiveAction = LIVE_ACTION_PATTERN.test(stripFencedCode(markdown)) && !hasDeclaredBoundary;
   if (unsafeLiveAction) {
     findings.push({
       level: 'error',
@@ -83,9 +83,23 @@ export function auditSkill(markdown, options = {}) {
 export function parseSections(markdown) {
   const sections = {};
   let current = 'preamble';
+  let fence = null;
   sections[current] = [];
 
   for (const line of markdown.split(/\r?\n/)) {
+    if (fence) {
+      sections[current].push(line);
+      if (isClosingFence(line, fence)) fence = null;
+      continue;
+    }
+
+    const openingFence = parseOpeningFence(line);
+    if (openingFence) {
+      fence = openingFence;
+      sections[current].push(line);
+      continue;
+    }
+
     const heading = line.match(/^#{1,3}\s+(.+?)\s*$/);
     if (heading) {
       current = normalizeHeading(heading[1]);
@@ -100,11 +114,43 @@ export function parseSections(markdown) {
   );
 }
 
+function parseOpeningFence(line) {
+  const match = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+  if (!match || (match[1][0] === '`' && match[2].includes('`'))) return null;
+  return { marker: match[1][0], length: match[1].length };
+}
+
+function isClosingFence(line, fence) {
+  const match = line.match(/^ {0,3}(`{3,}|~{3,})[ \t]*$/);
+  return Boolean(
+    match &&
+    match[1][0] === fence.marker &&
+    match[1].length >= fence.length
+  );
+}
+
+function stripFencedCode(markdown) {
+  const lines = [];
+  let fence = null;
+
+  for (const line of markdown.split(/\r?\n/)) {
+    if (fence) {
+      if (isClosingFence(line, fence)) fence = null;
+      continue;
+    }
+
+    fence = parseOpeningFence(line);
+    if (!fence) lines.push(line);
+  }
+
+  return lines.join('\n');
+}
+
 export function extractRequirements(sections) {
   const read = (name) => {
     const aliases = SECTION_ALIASES[name] || [name];
     const parts = aliases.map((alias) => sections[normalizeHeading(alias)]).filter(Boolean);
-    return parts.join('\n');
+    return stripFencedCode(parts.join('\n'));
   };
 
   return {

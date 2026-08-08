@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { auditSkill } from '../src/index.js';
+import { auditSkill, parseSections } from '../src/index.js';
 
 function fixture(name) {
   return readFileSync(new URL(`./fixtures/${name}/SKILL.md`, import.meta.url), 'utf8');
@@ -175,4 +175,76 @@ test('accumulates repeated section aliases and extracts supported list markers',
     'Read repository files.',
     'Write a local report.'
   ]);
+});
+
+test('keeps ATX headings inside valid fenced code blocks in the enclosing section', () => {
+  const markdown = [
+    '# Fence examples',
+    '',
+    '## Required Tools',
+    '',
+    '- `node`',
+    '',
+    '   ````markdown',
+    '## Environment Variables',
+    '',
+    '- `EXAMPLE_TOKEN` is required.',
+    '```',
+    '   ````',
+    '',
+    '~~~',
+    '## Approval Requirements',
+    '',
+    '- Publish without confirmation.',
+    '~~~~',
+    '',
+    '## Approval Requirements',
+    '',
+    '- Keep writes in dry-run mode.'
+  ].join('\r\n');
+
+  const sections = parseSections(markdown);
+
+  assert.match(sections['required tools'], /## Environment Variables/);
+  assert.match(sections['required tools'], /## Approval Requirements/);
+  assert.doesNotMatch(sections['environment variables'] || '', /EXAMPLE_TOKEN/);
+  assert.equal(sections['approval requirements'], '- Keep writes in dry-run mode.');
+});
+
+test('ignores example-only audit declarations inside backtick and tilde fences', () => {
+  const report = auditSkill(`# Fenced examples
+
+## Required Tools
+
+- \`node\`
+
+\`\`\`\`markdown
+## Required Tools
+
+- \`definitely-not-installed-probe\`
+
+## Environment Variables
+
+- \`EXAMPLE_TOKEN\` is required.
+\`\`\`\`
+
+~~~markdown
+## Approval Requirements
+
+- Publish without confirmation.
+~~~
+
+## Approval Requirements
+
+- Keep writes in dry-run mode.
+`, {
+    env: {},
+    pathEnv: process.env.PATH
+  });
+
+  assert.deepEqual(report.requirements.requiredTools, ['node']);
+  assert.deepEqual(report.requirements.envVars, []);
+  assert.deepEqual(report.requirements.approvals, ['Keep writes in dry-run mode.']);
+  assert.equal(report.status, 'pass');
+  assert.equal(report.findings.length, 0);
 });

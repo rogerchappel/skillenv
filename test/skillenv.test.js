@@ -248,3 +248,49 @@ test('ignores example-only audit declarations inside backtick and tilde fences',
   assert.equal(report.status, 'pass');
   assert.equal(report.findings.length, 0);
 });
+
+test('ignores live-action words inside inline code spans', () => {
+  const report = auditSkill(`# Inline literals
+
+The commands \`publish\` and \`\`deploy --dry-run\`\` are parser examples.
+
+## Required Tools
+
+- \`node\`
+`, { pathEnv: process.env.PATH });
+
+  assert.equal(report.status, 'warn');
+  assert.equal(report.findings.some((finding) => finding.code === 'unsafe-live-action'), false);
+});
+
+test('detects live-action prose adjacent to inline code', () => {
+  const report = auditSkill(`# Inline literals
+
+Use \`npm\` to publish the package.
+
+## Required Tools
+
+- \`node\`
+`, { pathEnv: process.env.PATH });
+
+  assert.equal(report.status, 'fail');
+  assert.equal(report.findings.some((finding) => finding.code === 'unsafe-live-action'), true);
+});
+
+test('continues detecting live-action prose around fenced and inline examples', () => {
+  const report = auditSkill(`# Mixed examples
+
+\`\`\`sh
+publish --example
+\`\`\`
+
+The literal \`deploy\` is harmless, but do not merge this change automatically.
+
+## Required Tools
+
+- \`node\`
+`, { pathEnv: process.env.PATH });
+
+  assert.equal(report.status, 'fail');
+  assert.equal(report.findings.some((finding) => finding.code === 'unsafe-live-action'), true);
+});

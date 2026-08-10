@@ -57,7 +57,7 @@ export function auditSkill(markdown, options = {}) {
 
   const boundaryText = [...requirements.approvals, ...requirements.sideEffects].join('\n');
   const hasDeclaredBoundary = APPROVAL_PATTERN.test(boundaryText) || PROHIBITION_PATTERN.test(boundaryText);
-  const unsafeLiveAction = LIVE_ACTION_PATTERN.test(stripFencedCode(markdown)) && !hasDeclaredBoundary;
+  const unsafeLiveAction = LIVE_ACTION_PATTERN.test(stripCode(markdown)) && !hasDeclaredBoundary;
   if (unsafeLiveAction) {
     findings.push({
       level: 'error',
@@ -144,6 +144,17 @@ function stripFencedCode(markdown) {
   }
 
   return lines.join('\n');
+}
+
+function stripCode(markdown) {
+  return stripInlineCode(stripFencedCode(markdown));
+}
+
+function stripInlineCode(markdown) {
+  return markdown.replace(/(`+)([\s\S]*?)\1(?!`)/g, (span, opening, content, offset) => {
+    const before = markdown[offset - 1];
+    return before === '`' || content.includes(opening) ? span : ' ';
+  });
 }
 
 export function extractRequirements(sections) {

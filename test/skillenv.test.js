@@ -211,6 +211,82 @@ test('keeps ATX headings inside valid fenced code blocks in the enclosing sectio
   assert.equal(sections['approval requirements'], '- Keep writes in dry-run mode.');
 });
 
+test('inherits approval and side-effect sections through nested headings for LF input', () => {
+  const report = auditSkill(`# Nested boundaries
+
+This skill can publish a report and write to the output directory.
+
+## Required Tools
+
+### Runtime
+
+- \`node\`
+
+## Approval Requirements
+
+### Publishing
+
+- Confirm before publishing.
+
+## Side-Effect Boundaries
+
+### Local output
+
+- Do not write without approval.
+
+## Examples
+
+### Unsafe example
+
+- Publish without confirmation.
+`, { pathEnv: process.env.PATH });
+
+  assert.deepEqual(report.requirements.requiredTools, ['node']);
+  assert.deepEqual(report.requirements.approvals, ['Confirm before publishing.']);
+  assert.deepEqual(report.requirements.sideEffects, ['Do not write without approval.']);
+  assert.equal(report.status, 'pass');
+});
+
+test('inherits requirement sections through nested headings for CRLF input', () => {
+  const markdown = [
+    '# Nested requirements',
+    '',
+    '## Environment Variables',
+    '',
+    '### Authentication',
+    '',
+    '- `PRIMARY_TOKEN` is required.',
+    '',
+    '```markdown',
+    '## Approval Requirements',
+    '### Example only',
+    '- Publish without confirmation.',
+    '```',
+    '',
+    '## Inputs',
+    '',
+    '### Files',
+    '',
+    '- repository',
+    '',
+    '## Notes',
+    '',
+    '### Not an input',
+    '',
+    '- ignored peer content'
+  ].join('\r\n');
+
+  const report = auditSkill(markdown, {
+    env: { PRIMARY_TOKEN: 'present' },
+    pathEnv: process.env.PATH
+  });
+
+  assert.deepEqual(report.requirements.envVars, ['PRIMARY_TOKEN']);
+  assert.deepEqual(report.requirements.inputs, ['repository']);
+  assert.deepEqual(report.requirements.approvals, []);
+  assert.equal(report.findings.some((finding) => finding.code === 'unsafe-live-action'), false);
+});
+
 test('ignores example-only audit declarations inside backtick and tilde fences', () => {
   const report = auditSkill(`# Fenced examples
 

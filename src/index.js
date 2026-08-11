@@ -9,6 +9,7 @@ const SECTION_ALIASES = {
   sideEffects: ['side-effect boundaries', 'side effects', 'side effects and safety'],
   inputs: ['inputs', 'required inputs']
 };
+const SUPPORTED_SECTIONS = new Set(Object.values(SECTION_ALIASES).flat().map(normalizeHeading));
 
 const LIVE_ACTION_PATTERN = /\b(push|publish|deploy|delete|merge|send|charge|transfer|write to|post to|create ticket|update crm)\b/i;
 const APPROVAL_PATTERN = /\b(approval|approve|explicit consent|dry-run|dry run|confirm before|read-only by default)\b/i;
@@ -83,6 +84,8 @@ export function auditSkill(markdown, options = {}) {
 export function parseSections(markdown) {
   const sections = {};
   let current = 'preamble';
+  let currentDepth = 0;
+  let currentSupported = false;
   let fence = null;
   sections[current] = [];
 
@@ -100,10 +103,15 @@ export function parseSections(markdown) {
       continue;
     }
 
-    const heading = line.match(/^#{1,3}\s+(.+?)\s*$/);
+    const heading = line.match(/^(#{1,3})\s+(.+?)\s*$/);
     if (heading) {
-      current = normalizeHeading(heading[1]);
-      sections[current] ||= [];
+      const depth = heading[1].length;
+      if (!currentSupported || depth <= currentDepth) {
+        current = normalizeHeading(heading[2]);
+        currentDepth = depth;
+        currentSupported = SUPPORTED_SECTIONS.has(current);
+        sections[current] ||= [];
+      }
       continue;
     }
     sections[current].push(line);

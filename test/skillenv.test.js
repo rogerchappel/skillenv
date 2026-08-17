@@ -287,6 +287,69 @@ test('inherits requirement sections through nested headings for CRLF input', () 
   assert.equal(report.findings.some((finding) => finding.code === 'unsafe-live-action'), false);
 });
 
+test('parses supported sections and nested boundaries through ATX level 6', () => {
+  const report = auditSkill(`# Deep sections
+
+###### Required Tools
+
+- \`node\`
+
+##### Environment Variables
+
+- \`DEEP_TOKEN\` is required.
+
+#### Approval Requirements
+
+###### Publishing
+
+- Keep writes in dry-run mode.
+`, {
+    env: { DEEP_TOKEN: 'present' },
+    pathEnv: process.env.PATH
+  });
+
+  assert.deepEqual(report.requirements.requiredTools, ['node']);
+  assert.deepEqual(report.requirements.envVars, ['DEEP_TOKEN']);
+  assert.deepEqual(report.requirements.approvals, ['Keep writes in dry-run mode.']);
+  assert.equal(report.status, 'pass');
+});
+
+test('preserves deep parent scope until a peer or higher heading for CRLF input', () => {
+  const markdown = [
+    '#### Environment Variables',
+    '',
+    '##### Runtime',
+    '',
+    '- `FIRST_TOKEN` is required.',
+    '',
+    '###### Details',
+    '',
+    '- `SECOND_TOKEN` is required.',
+    '',
+    '##### Notes',
+    '',
+    '- `THIRD_TOKEN` is required.',
+    '',
+    '#### Inputs',
+    '',
+    '##### Files',
+    '',
+    '- repository',
+    '',
+    '### Notes',
+    '',
+    '- ignored peer content'
+  ].join('\r\n');
+
+  const sections = parseSections(markdown);
+
+  assert.match(sections['environment variables'], /FIRST_TOKEN/);
+  assert.match(sections['environment variables'], /SECOND_TOKEN/);
+  assert.match(sections['environment variables'], /THIRD_TOKEN/);
+  assert.equal(sections.inputs, '- repository');
+  assert.equal(sections.notes, '- ignored peer content');
+});
+
 test('ignores example-only audit declarations inside backtick and tilde fences', () => {
   const report = auditSkill(`# Fenced examples
 

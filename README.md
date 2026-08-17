@@ -49,7 +49,8 @@ standard error, while reports and help are written to standard output.
 ## Limitations
 
 - Section extraction is intentionally conservative and Markdown-only.
-- Declarations under nested ATX headings remain part of a supported parent section until the next heading of equal or higher rank. For example, `### Publishing` beneath `## Approval Requirements` can contain approval declarations; the next `##` section ends that scope.
+- CommonMark ATX section headings from level 1 through level 6 are supported.
+- Declarations under nested ATX headings remain part of a supported parent section until the next heading of equal or higher rank. For example, `##### Publishing` beneath `#### Approval Requirements` can contain approval declarations; the next `####` section ends that scope.
 - ATX headings inside valid backtick or tilde fenced code blocks are treated as example content, not section declarations. Fenced examples are excluded from requirement and live-action checks.
 - Backtick inline code spans, including spans delimited by multiple backticks, are excluded from live-action checks. Actionable prose before or after a span is still checked; malformed or unmatched backticks remain subject to the heuristic.
 - Supported list markers are `-`, `*`, `+`, and ordered markers such as `1.` or `1)`.

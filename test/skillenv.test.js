@@ -38,6 +38,45 @@ test('flags live action wording without approval boundaries', () => {
   assert.ok(report.findings.some((finding) => finding.code === 'unsafe-live-action'));
 });
 
+test('flags inflected common live-action families without matching unrelated words', () => {
+  const actionable = [
+    'publishes packages', 'deployed releases', 'deleting files', 'merges pull requests',
+    'sent email', 'charges cards', 'transferred funds', 'wrote to disk',
+    'posting to Slack', 'created tickets', 'updates CRM'
+  ];
+
+  for (const prose of actionable) {
+    const report = auditSkill(`# Action\n\nThis skill ${prose}.\n\n## Required Tools\n\n- \`node\``, {
+      env: {}, pathEnv: process.env.PATH
+    });
+    assert.equal(report.status, 'fail', prose);
+    assert.ok(report.findings.some((finding) => finding.code === 'unsafe-live-action'), prose);
+  }
+
+  for (const prose of ['publisher metadata', 'deployment notes', 'file merger', 'email sender', 'ticket creator']) {
+    const report = auditSkill(`# Description\n\nThis skill documents ${prose}.\n\n## Required Tools\n\n- \`node\``, {
+      env: {}, pathEnv: process.env.PATH
+    });
+    assert.equal(report.status, 'warn', prose);
+    assert.equal(report.findings.some((finding) => finding.code === 'unsafe-live-action'), false, prose);
+  }
+});
+
+test('accepts inflected live actions with supported safety boundaries', () => {
+  const cases = [
+    ['Approval Requirements', 'Confirm before publishing packages.'],
+    ['Side-Effect Boundaries', 'Never delete files.'],
+    ['Side Effects', 'Read-only by default when updating CRM.']
+  ];
+
+  for (const [heading, boundary] of cases) {
+    const report = auditSkill(`# Bounded action\n\nThis skill publishes packages.\n\n## Required Tools\n\n- \`node\`\n\n## ${heading}\n\n- ${boundary}`, {
+      env: {}, pathEnv: process.env.PATH
+    });
+    assert.equal(report.findings.some((finding) => finding.code === 'unsafe-live-action'), false);
+  }
+});
+
 test('honors every approval section alias when checking live actions', () => {
   for (const heading of ['Approval Requirements', 'Approvals', 'External Actions']) {
     const report = auditSkill(`# Alias

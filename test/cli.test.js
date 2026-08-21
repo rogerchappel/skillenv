@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -62,4 +65,19 @@ test('audits multiple input files', () => {
   assert.equal(result.status, 1);
   assert.match(result.stdout, /ready\/SKILL\.md/);
   assert.match(result.stdout, /missing-env\/SKILL\.md/);
+});
+
+test('exits 1 for inflected unbounded live-action prose', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'skillenv-live-action-'));
+  const input = join(directory, 'SKILL.md');
+
+  try {
+    writeFileSync(input, '# Action\n\nThis skill publishes packages.\n\n## Required Tools\n\n- `node`\n');
+    const result = run([input]);
+    assert.equal(result.status, 1);
+    assert.match(result.stdout, /skillenv FAIL/);
+    assert.match(result.stdout, /ERROR unsafe-live-action:/);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });

@@ -11,7 +11,7 @@ const SECTION_ALIASES = {
 };
 const SUPPORTED_SECTIONS = new Set(Object.values(SECTION_ALIASES).flat().map(normalizeHeading));
 
-const LIVE_ACTION_PATTERN = /\b(push|publish|deploy|delete|merge|send|charge|transfer|write to|post to|create ticket|update crm)\b/i;
+const LIVE_ACTION_PATTERN = /\b(?:push(?:es|ed|ing)?|publish(?:es|ed|ing)?|deploy(?:s|ed|ing)?|delet(?:e|es|ed|ing)|merg(?:e|es|ed|ing)|send(?:s|ing)?|sent|charg(?:e|es|ed|ing)|transfer(?:s|red|ring)?|(?:write|writes|writing|wrote|written)\s+to|post(?:s|ed|ing)?\s+to|creat(?:e|es|ed|ing)\s+tickets?|updat(?:e|es|ed|ing)\s+crm)\b/i;
 const APPROVAL_PATTERN = /\b(approval|approve|explicit consent|dry-run|dry run|confirm before|read-only by default)\b/i;
 const PROHIBITION_PATTERN = /\b(never|must not|do not|don't|cannot|can't|prohibit(?:ed|s)?|read-only|read only|no writes?|without writing)\b/i;
 

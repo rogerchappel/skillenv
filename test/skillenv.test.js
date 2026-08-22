@@ -38,6 +38,42 @@ test('flags live action wording without approval boundaries', () => {
   assert.ok(report.findings.some((finding) => finding.code === 'unsafe-live-action'));
 });
 
+test('does not treat negated or waived approval wording as a safety boundary', () => {
+  const declarations = [
+    'Approval is not required before publishing packages.',
+    'No approval needed before publishing packages.',
+    'Explicit consent is waived for publishing packages.',
+    'Publishing proceeds without approval.',
+    'Do not approve package publishing.'
+  ];
+
+  for (const declaration of declarations) {
+    const report = auditSkill(`# Action\n\nThis skill publishes packages.\n\n## Required Tools\n\n- \`node\`\n\n## Approval Requirements\n\n- ${declaration}`, {
+      pathEnv: process.env.PATH
+    });
+    assert.equal(report.status, 'fail', declaration);
+    assert.ok(report.findings.some((finding) => finding.code === 'unsafe-live-action'), declaration);
+  }
+});
+
+test('retains affirmative boundaries in mixed and repeated declarations', () => {
+  const cases = [
+    ['Approval is not required for reads.', 'Confirm before publishing packages.'],
+    ['No approval needed for local inspection; confirm before publishing packages.'],
+    ['Approval is required before publishing.', 'Approval is not required for reads.'],
+    ['Keep publishing in dry-run mode.', 'No approval needed for reads.'],
+    ['Publishing is read-only by default.', 'Approval is waived for inspection.']
+  ];
+
+  for (const declarations of cases) {
+    const list = declarations.map((declaration) => `- ${declaration}`).join('\n');
+    const report = auditSkill(`# Action\n\nThis skill publishes packages.\n\n## Required Tools\n\n- \`node\`\n\n## Approval Requirements\n\n${list}`, {
+      pathEnv: process.env.PATH
+    });
+    assert.equal(report.findings.some((finding) => finding.code === 'unsafe-live-action'), false, declarations.join(' | '));
+  }
+});
+
 test('flags inflected common live-action families without matching unrelated words', () => {
   const actionable = [
     'publishes packages', 'deployed releases', 'deleting files', 'merges pull requests',

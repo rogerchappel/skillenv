@@ -81,3 +81,19 @@ test('exits 1 for inflected unbounded live-action prose', () => {
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test('exits 1 and reports JSON failure for negated approval wording', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'skillenv-negated-approval-'));
+  const input = join(directory, 'SKILL.md');
+
+  try {
+    writeFileSync(input, '# Action\n\nThis skill publishes packages.\n\n## Required Tools\n\n- `node`\n\n## Approval Requirements\n\n- No approval needed before publishing packages.\n');
+    const result = run(['--json', input]);
+    assert.equal(result.status, 1);
+    const report = JSON.parse(result.stdout).reports[0];
+    assert.equal(report.status, 'fail');
+    assert.ok(report.findings.some((finding) => finding.code === 'unsafe-live-action'));
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

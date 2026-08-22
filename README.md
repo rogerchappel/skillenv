@@ -57,6 +57,7 @@ standard error, while reports and help are written to standard output.
 - Repeated supported sections are combined in document order, with duplicate declarations kept once.
 - The CLI detects common live-action families and their usual inflections: pushing, publishing, deploying, deleting, merging, sending, charging, and transferring, plus writing to or posting to a destination, creating tickets, and updating CRM. For example, `publishes packages`, `sent email`, and `created tickets` are actionable; nouns such as `publisher metadata` and `ticket creator` are not.
 - Live-action wording fails unless a supported approval, dry-run, prohibition, or read-only boundary is declared. A side-effect declaration that authorizes or describes performing the action is not itself a safety boundary.
+- Negated or waived approval wording, such as `approval is not required`, `no approval needed`, or `without approval`, is not a safety boundary. An independently declared affirmative approval, dry-run, prohibition, or read-only boundary still applies.
 - A prohibition in a side-effect section prevents the live-action error, but a skill without an approval section still receives the separate `no-approvals` warning.
 - Required tool names should be written as list items, preferably with backticks.
 - Required environment variables should be list items containing the variable name and the word `required`; optional variables and examples are ignored.

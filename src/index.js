@@ -13,6 +13,7 @@ const SUPPORTED_SECTIONS = new Set(Object.values(SECTION_ALIASES).flat().map(nor
 
 const LIVE_ACTION_PATTERN = /\b(?:push(?:es|ed|ing)?|publish(?:es|ed|ing)?|deploy(?:s|ed|ing)?|delet(?:e|es|ed|ing)|merg(?:e|es|ed|ing)|send(?:s|ing)?|sent|charg(?:e|es|ed|ing)|transfer(?:s|red|ring)?|(?:write|writes|writing|wrote|written)\s+to|post(?:s|ed|ing)?\s+to|creat(?:e|es|ed|ing)\s+tickets?|updat(?:e|es|ed|ing)\s+crm)\b/i;
 const APPROVAL_PATTERN = /\b(approval|approve|explicit consent|dry-run|dry run|confirm before|read-only by default)\b/i;
+const NEGATED_APPROVAL_PATTERN = /\b(?:approval|explicit consent)\s+(?:is\s+)?(?:not\s+required|not\s+needed|unnecessary|waived)|\bno\s+(?:approval|explicit consent)(?:\s+(?:is\s+)?(?:required|needed))?|\bwithout\s+(?:approval|explicit consent)|\bdo\s+not\s+approve\b/gi;
 const PROHIBITION_PATTERN = /\b(never|must not|do not|don't|cannot|can't|prohibit(?:ed|s)?|read-only|read only|no writes?|without writing)\b/i;
 
 export function auditSkill(markdown, options = {}) {
@@ -56,8 +57,10 @@ export function auditSkill(markdown, options = {}) {
     });
   }
 
-  const boundaryText = [...requirements.approvals, ...requirements.sideEffects].join('\n');
-  const hasDeclaredBoundary = APPROVAL_PATTERN.test(boundaryText) || PROHIBITION_PATTERN.test(boundaryText);
+  const boundaries = [...requirements.approvals, ...requirements.sideEffects];
+  const boundaryText = boundaries.join('\n');
+  const nonNegatedBoundaryText = boundaryText.replace(NEGATED_APPROVAL_PATTERN, ' ');
+  const hasDeclaredBoundary = boundaries.some(hasAffirmativeApprovalBoundary) || PROHIBITION_PATTERN.test(nonNegatedBoundaryText);
   const unsafeLiveAction = LIVE_ACTION_PATTERN.test(stripCode(markdown)) && !hasDeclaredBoundary;
   if (unsafeLiveAction) {
     findings.push({
@@ -79,6 +82,10 @@ export function auditSkill(markdown, options = {}) {
     requirements,
     findings
   };
+}
+
+function hasAffirmativeApprovalBoundary(declaration) {
+  return APPROVAL_PATTERN.test(declaration.replace(NEGATED_APPROVAL_PATTERN, ' '));
 }
 
 export function parseSections(markdown) {

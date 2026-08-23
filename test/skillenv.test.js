@@ -286,6 +286,56 @@ test('keeps ATX headings inside valid fenced code blocks in the enclosing sectio
   assert.equal(sections['approval requirements'], '- Keep writes in dry-run mode.');
 });
 
+test('parses supported ATX sections indented up to three spaces', () => {
+  const markdown = [
+    '# Indented sections',
+    '',
+    ' ## Required Tools',
+    '',
+    '- `node`',
+    '',
+    '  ## Environment Variables',
+    '',
+    '- `INDENTED_TOKEN` is required.',
+    '',
+    '   ## Approvals',
+    '',
+    '- Confirm before publishing.',
+    '',
+    '   ## Side Effects',
+    '',
+    '- Write a local report.'
+  ].join('\r\n');
+
+  const report = auditSkill(markdown, {
+    env: { INDENTED_TOKEN: 'present' },
+    pathEnv: process.env.PATH
+  });
+
+  assert.deepEqual(report.requirements.requiredTools, ['node']);
+  assert.deepEqual(report.requirements.envVars, ['INDENTED_TOKEN']);
+  assert.deepEqual(report.requirements.approvals, ['Confirm before publishing.']);
+  assert.deepEqual(report.requirements.sideEffects, ['Write a local report.']);
+});
+
+test('does not parse four-space or fenced ATX examples as sections', () => {
+  const sections = parseSections([
+    '## Required Tools',
+    '- `node`',
+    '    ## Environment Variables',
+    '    - `CODE_TOKEN` is required.',
+    '```markdown',
+    '   ## Inputs',
+    '- example input',
+    '```'
+  ].join('\n'));
+
+  assert.match(sections['required tools'], /## Environment Variables/);
+  assert.match(sections['required tools'], /## Inputs/);
+  assert.equal(sections['environment variables'], undefined);
+  assert.equal(sections.inputs, undefined);
+});
+
 test('inherits approval and side-effect sections through nested headings for LF input', () => {
   const report = auditSkill(`# Nested boundaries
 

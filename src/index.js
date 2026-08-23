@@ -110,7 +110,7 @@ export function parseSections(markdown) {
       continue;
     }
 
-    const heading = line.match(/^(#{1,6})\s+(.+?)\s*$/);
+    const heading = line.match(/^ {0,3}(#{1,6})\s+(.+?)\s*$/);
     if (heading) {
       const depth = heading[1].length;
       if (!currentSupported || depth <= currentDepth) {

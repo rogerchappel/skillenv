@@ -57,6 +57,36 @@ test('emits JSON from the package entrypoint', () => {
   assert.equal(JSON.parse(result.stdout).reports[0].status, 'pass');
 });
 
+test('indented requirement aliases affect JSON status and exit code', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'skillenv-indented-'));
+  const input = join(directory, 'SKILL.md');
+
+  try {
+    writeFileSync(input, [
+      '# Indented requirements',
+      '   ## Required Tools',
+      '- `definitely_missing_skillenv_tool`',
+      '  ## Environment Variables',
+      '- `MISSING_INDENTED_TOKEN` is required.',
+      ' ## Approval Requirements',
+      '- Confirm before publishing.',
+      '   ## Side-effect boundaries',
+      '- Write a local report.'
+    ].join('\n'));
+    const result = run(['--json', input]);
+    const report = JSON.parse(result.stdout).reports[0];
+
+    assert.equal(result.status, 1);
+    assert.equal(report.status, 'fail');
+    assert.deepEqual(report.requirements.requiredTools, ['definitely_missing_skillenv_tool']);
+    assert.deepEqual(report.requirements.envVars, ['MISSING_INDENTED_TOKEN']);
+    assert.deepEqual(report.requirements.approvals, ['Confirm before publishing.']);
+    assert.deepEqual(report.requirements.sideEffects, ['Write a local report.']);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test('audits multiple input files', () => {
   const result = run([
     'test/fixtures/ready/SKILL.md',

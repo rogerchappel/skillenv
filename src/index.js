@@ -96,7 +96,9 @@ export function parseSections(markdown) {
   let fence = null;
   sections[current] = [];
 
-  for (const line of markdown.split(/\r?\n/)) {
+  const lines = markdown.split(/\r?\n/);
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const line = lines[lineIndex];
     if (fence) {
       sections[current].push(line);
       if (isClosingFence(line, fence)) fence = null;
@@ -119,6 +121,21 @@ export function parseSections(markdown) {
         currentSupported = SUPPORTED_SECTIONS.has(current);
         sections[current] ||= [];
       }
+      continue;
+    }
+
+    const underline = lines[lineIndex + 1];
+    const setext = underline?.match(/^ {0,3}(=+|-+)[ \t]*$/);
+    const setextLabel = line.match(/^ {0,3}(\S.*?)[ \t]*$/);
+    if (setext && setextLabel && !/^ {0,3}(?:#{1,6}(?:[ \t]|$)|(?:(?:\*[ \t]*){3,}|(?:_[ \t]*){3,}|(?:-[ \t]*){3,}))/.test(line)) {
+      const depth = setext[1][0] === '=' ? 1 : 2;
+      if (!currentSupported || depth <= currentDepth) {
+        current = normalizeHeading(setextLabel[1]);
+        currentDepth = depth;
+        currentSupported = SUPPORTED_SECTIONS.has(current);
+        sections[current] ||= [];
+      }
+      lineIndex += 1;
       continue;
     }
     sections[current].push(line);

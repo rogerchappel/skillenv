@@ -3,6 +3,26 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { auditSkill, parseSections } from '../src/index.js';
 
+test('setext section aliases match ATX behavior with LF and CRLF', () => {
+  const atx = `# Skill\n\n## Required Tools\n\n- node\n\n## Environment Variables\n\n- API_URL (required)\n\n## Inputs\n\n- repository\n\n## Approval Requirements\n\n- Confirm before publishing.\n\n## Side Effects\n\n- Publishes a package.`;
+  const setext = atx
+    .replace('# Skill', 'Skill\n=====')
+    .replace(/^## (Required Tools|Environment Variables|Inputs|Approval Requirements|Side Effects)$/gm, '$1\n---');
+  for (const newline of ['\n', '\r\n']) {
+    const options = { pathEnv: process.env.PATH, env: { API_URL: 'test' } };
+    assert.deepEqual(
+      auditSkill(setext.replaceAll('\n', newline), options),
+      auditSkill(atx.replaceAll('\n', newline), options)
+    );
+  }
+});
+
+test('setext-looking text in fenced and indented code is ignored', () => {
+  const sections = parseSections('```md\nRequired Tools\n---\n```\n\n    Approval Requirements\n    ---');
+  assert.equal(sections['required tools'], undefined);
+  assert.equal(sections['approval requirements'], undefined);
+});
+
 function fixture(name) {
   return readFileSync(new URL(`./fixtures/${name}/SKILL.md`, import.meta.url), 'utf8');
 }

@@ -57,6 +57,24 @@ test('emits JSON from the package entrypoint', () => {
   assert.equal(JSON.parse(result.stdout).reports[0].status, 'pass');
 });
 
+test('setext aliases affect JSON findings and exit status', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'skillenv-setext-'));
+  const input = join(directory, 'SKILL.md');
+  try {
+    writeFileSync(input, 'Skill\n=====\n\nRequired Tools\n---\n\n- definitely_missing_skillenv_tool\n\nEnvironment Variables\n---\n\n- MISSING_SETEXT_TOKEN is required.\n\nInputs\n---\n\n- repository\n\nApproval Requirements\n---\n\n- Confirm before publishing.\n\nSide Effects\n---\n\n- Publishes a package.\n');
+    const result = run(['--json', input]);
+    const report = JSON.parse(result.stdout).reports[0];
+    assert.equal(result.status, 1);
+    assert.deepEqual(report.requirements.requiredTools, ['definitely_missing_skillenv_tool']);
+    assert.deepEqual(report.requirements.envVars, ['MISSING_SETEXT_TOKEN']);
+    assert.deepEqual(report.requirements.inputs, ['repository']);
+    assert.deepEqual(report.requirements.approvals, ['Confirm before publishing.']);
+    assert.deepEqual(report.requirements.sideEffects, ['Publishes a package.']);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test('indented requirement aliases affect JSON status and exit code', () => {
   const directory = mkdtempSync(join(tmpdir(), 'skillenv-indented-'));
   const input = join(directory, 'SKILL.md');

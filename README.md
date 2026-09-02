@@ -5,7 +5,7 @@
 ## Quickstart
 
 ```sh
-npm install
+npm ci
 npm run smoke
 node bin/skillenv.js --json test/fixtures/ready/SKILL.md
 ```
@@ -70,12 +70,13 @@ standard error, while reports and help are written to standard output.
 npm test
 npm run check
 npm run smoke
-npm pack --dry-run
+npm run package:smoke
 ```
 
 ## Local Verification
 
 ```sh
+npm ci
 npm run check
 npm test
 npm run smoke

@@ -58,6 +58,23 @@ test('flags live action wording without approval boundaries', () => {
   assert.ok(report.findings.some((finding) => finding.code === 'unsafe-live-action'));
 });
 
+test('treats frontmatter-only tool declarations as out of scope (issue #19)', () => {
+  // Pins the documented behavior: a `prerequisites.commands` entry in YAML
+  // frontmatter is not parsed, so the skill yields the no-required-tools
+  // warning. Any future decision to audit frontmatter must change this test
+  // deliberately (see README Limitations).
+  const report = auditSkill(fixture('frontmatter-only'), {
+    env: {},
+    pathEnv: process.env.PATH
+  });
+
+  assert.equal(report.status, 'warn');
+  assert.deepEqual(report.requirements.requiredTools, []);
+  const warning = report.findings.find((finding) => finding.code === 'no-required-tools');
+  assert.ok(warning, 'expected a no-required-tools finding');
+  assert.equal(warning.level, 'warn');
+});
+
 test('does not treat negated or waived approval wording as a safety boundary', () => {
   const declarations = [
     'Approval is not required before publishing packages.',

@@ -8,11 +8,16 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - run: npm run release:check
+      - run: npm test
+      - if: matrix.node-version == 20
+        run: npm run release:check
